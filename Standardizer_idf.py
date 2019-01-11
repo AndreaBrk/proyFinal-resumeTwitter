@@ -3,24 +3,44 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.text import TextCollection
 import numpy as np
-## from nltk.twitter import Twitter
+import random
+import json
+import urllib
+import pprint
+from nltk.twitter import Query, Streamer, Twitter, TweetViewer, TweetWriter, credsfromfile
+
 
 
 
 class Standardizer:
 
+  #Esta funcion retorna una matriz con los twets y el documetno original estandarizados.   
+  # Se asume que el arreglo document esta ordenado 
+  def obtener_Twits(listaPalabras, DicPalabras):
+    listaPalabrasConsulta = []
+    size = int(len(listaPalabras) / 2)
+    for x in list(DicPalabras)[0:3]:
+      listaPalabrasConsulta.append(x)
+    print("Lista de palabras para la consulta: ", listaPalabrasConsulta)
 
+    txt = ' '.join(listaPalabrasConsulta)
+    oauth = credsfromfile()
+    client = Query(**oauth)
+    tweets = client.search_tweets(keywords=txt, limit=10)
 
-  #Esta funcion retorna una matriz con los twets y el documetno original estandarizados.     
-  def obtener_Twits():    
-      text1 = Standardizer.standardize("The stress of the students has no relation to university life.")
-      text2 = Standardizer.standardize("The students are good people.")
-      text3 = Standardizer.standardize("The students suffer a lot of stress in the summer. Poor students.")
-      a=[]
-      a.append(text1)
-      a.append(text2)      
-      a.append(text3)
-      return a
+    a=[]
+    pp = pprint.PrettyPrinter(depth=4)
+    for tweet in tweets:
+      # pp.pprint(tweet)
+      a.append(tweet['text'])
+
+    # text1 = Standardizer.standardize("The stress of the students has no relation to university life.")
+    # text2 = Standardizer.standardize("The students are good people.")
+    # text3 = Standardizer.standardize("The students suffer a lot of stress in the summer. Poor students.")
+    # a.append(text1)
+    # a.append(text2)      
+    # a.append(text3)
+    return a
 
   #Funcion que retorna un arreglo con los la frecuencia de cada uno de los elementos del documento entregado
   def freq(document):
@@ -50,13 +70,16 @@ class Standardizer:
        print("------------------")
        print (twet)
        fila=[]
-       dicPalabras = Standardizer.freq(twet)
-       
+       document = Standardizer.standardize(twet)
+       dicPalabras = Standardizer.freq(document )
+       print("dicPalabras ", dicPalabras)
        for pClave in listaPalabras:
+         print("Palabra ", dicPalabras.get(pClave))
          if(dicPalabras.get(pClave) == None):          
            fila.append(0)
          else:         
            ni=Standardizer.teetsQueLaContienen(twets,pClave)
+           print("ni ", dicPalabras.get(pClave))
            print ("idf(",pClave,")=log(",CantTeets,"/",ni,"))log(",CantTeets/ni,")= ",np.log10(CantTeets/ni))
            print("wij= fij X idf=",dicPalabras.get(pClave)," * ", np.log10(CantTeets/ni), "= ",dicPalabras.get(pClave) * np.log10(CantTeets/ni))
            fila.append(dicPalabras.get(pClave) *(np.log10(CantTeets/ni)))
@@ -103,15 +126,20 @@ class Standardizer:
   
      
   def main():
-    text = "The students suffer a lot of stress in the summer. Poor students."
+    text = "Global warming is a long-term rise in the average temperature of the Earth's climate system, an aspect of climate change shown by temperature measurements and by multiple effects of the warming."
     document=Standardizer.standardize(text)
     dicPalabras = Standardizer.freq(document)
     print(document)
-    matris_twest=Standardizer.obtener_Twits()
+    matris_twest=Standardizer.obtener_Twits(document, dicPalabras)
     arr_idf=Standardizer.matris_idftf(document,matris_twest,len(matris_twest))
     print("Sim entre doc original y doc1:",Standardizer.sim(Standardizer.arr_freq(dicPalabras),arr_idf[0]))
     print("Sim entre doc original y doc2:",Standardizer.sim(Standardizer.arr_freq(dicPalabras),arr_idf[1]))    
     print("Sim entre doc original y doc3:",Standardizer.sim(Standardizer.arr_freq(dicPalabras),arr_idf[2]))
+    print("Sim entre doc original y doc4:",Standardizer.sim(Standardizer.arr_freq(dicPalabras),arr_idf[3]))
+    print("Sim entre doc original y doc5:",Standardizer.sim(Standardizer.arr_freq(dicPalabras),arr_idf[4]))
+
+
+    
   
 Standardizer.main()
 
